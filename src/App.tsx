@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
-import { MdDone } from "react-icons/md";
-import { FaUndo } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
 
 interface Task {
   id: number;
   text: string;
   completed: boolean;
   priority: string;
+  timestamp: string;
+  dueDate: string;
 }
 
 interface CustomTimes {
@@ -23,9 +21,8 @@ const Pomodoro: React.FC = () => {
   const [mode, setMode] = useState<string>("pomodoro");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskInput, setTaskInput] = useState<string>("");
+  const [dueDate, setDueDate] = useState<string>("");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [completedCount, setCompletedCount] = useState<number>(0);
-  const [pomodoroCount, setPomodoroCount] = useState<number>(0);
   const [customTimes, setCustomTimes] = useState<CustomTimes>({ pomodoro: 25, shortBreak: 5, longBreak: 15 });
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
@@ -37,14 +34,13 @@ const Pomodoro: React.FC = () => {
           if (prev > 0) return prev - 1;
           clearInterval(timer);
           setIsRunning(false);
-          setPomodoroCount(prev => prev + (mode === "pomodoro" ? 1 : 0));
           if (soundEnabled) new Audio("/alarm.mp3").play();
           return 0;
         });
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isRunning, mode, soundEnabled, pomodoroCount]);
+  }, [isRunning, soundEnabled]);
 
   const handleModeChange = (newMode: string) => {
     setMode(newMode);
@@ -54,8 +50,17 @@ const Pomodoro: React.FC = () => {
 
   const addTask = () => {
     if (taskInput.trim()) {
-      setTasks([...tasks, { id: Date.now(), text: taskInput, completed: false, priority: "Medium" }]);
+      const newTask: Task = {
+        id: Date.now(),
+        text: taskInput,
+        completed: false,
+        priority: "Medium",
+        timestamp: new Date().toLocaleString(),
+        dueDate: dueDate
+      };
+      setTasks([...tasks, newTask]);
       setTaskInput("");
+      setDueDate("");
     }
   };
 
@@ -64,14 +69,16 @@ const Pomodoro: React.FC = () => {
     if (taskToEdit) {
       setEditingTask(taskToEdit);
       setTaskInput(taskToEdit.text);
+      setDueDate(taskToEdit.dueDate);
     }
   };
 
   const saveTask = () => {
     if (editingTask) {
-      setTasks(tasks.map(task => task.id === editingTask.id ? { ...task, text: taskInput } : task));
+      setTasks(tasks.map(task => task.id === editingTask.id ? { ...task, text: taskInput, dueDate: dueDate } : task));
       setEditingTask(null);
       setTaskInput("");
+      setDueDate("");
     }
   };
 
@@ -104,6 +111,12 @@ const Pomodoro: React.FC = () => {
           className="w-full p-2 border rounded"
           placeholder="Add a new task..."
         />
+        <input 
+          type="datetime-local" 
+          value={dueDate} 
+          onChange={(e) => setDueDate(e.target.value)} 
+          className="w-full p-2 border rounded mt-2"
+        />
         {editingTask ? (
           <button onClick={saveTask} className="w-full mt-2 p-2 bg-yellow-600 text-white rounded">Save Task</button>
         ) : (
@@ -114,17 +127,16 @@ const Pomodoro: React.FC = () => {
       <ul className="mt-4 w-96">
         {tasks.map(task => (
           <li key={task.id} className="flex items-center justify-between p-2 border-b">
-            <span className={task.completed ? "line-through" : ""}>{task.text}</span>
             <div>
-              <button onClick={() => toggleTaskCompletion(task.id)} className="px-2 py-1 text-white rounded mr-2">
-                {task.completed ? <FaUndo/> : <MdDone/>}
+              <span className={task.completed ? "line-through" : ""}>{task.text}</span>
+              <div className="text-sm text-gray-300">Due: {task.dueDate}</div>
+            </div>
+            <div>
+              <button onClick={() => toggleTaskCompletion(task.id)} className="px-2 py-1  text-white rounded mr-2">
+                {task.completed ? "Undo" : "Done"}
               </button>
-              <button onClick={() => editTask(task.id)} className="px-2 py-1 text-white rounded mr-2">
-                <MdEdit/>
-              </button>
-              <button onClick={() => deleteTask(task.id)} className="px-2 py-1  text-white rounded">
-                <MdDelete/>
-              </button>
+              <button onClick={() => editTask(task.id)} className="px-2 py-1  text-white rounded mr-2">Edit</button>
+              <button onClick={() => deleteTask(task.id)} className="px-2 py-1 text-white rounded">Delete</button>
             </div>
           </li>
         ))}
