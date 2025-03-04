@@ -23,8 +23,8 @@ const Pomodoro: React.FC = () => {
   const [taskInput, setTaskInput] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [customTimes, setCustomTimes] = useState<CustomTimes>({ pomodoro: 25, shortBreak: 5, longBreak: 15 });
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [customTimes] = useState<CustomTimes>({ pomodoro: 25, shortBreak: 5, longBreak: 15 });
+  const [soundEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
